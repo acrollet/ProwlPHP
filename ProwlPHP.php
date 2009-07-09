@@ -47,13 +47,13 @@ class Prowl {
 	{
 		$this->_obj_curl = curl_init($this->_api_domain . $url);
 		curl_setopt($this->_obj_curl, CURLOPT_HEADER, 0);
-        curl_setopt($this->_obj_curl, CURLOPT_USERAGENT, "ProwlPHP/" . $this->_version);
+		curl_setopt($this->_obj_curl, CURLOPT_USERAGENT, "ProwlPHP/" . $this->_version);
 		curl_setopt($this->_obj_curl, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
-        curl_setopt($this->_obj_curl, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($this->_obj_curl, CURLOPT_RETURNTRANSFER, 1);
-        $return = curl_exec($this->_obj_curl);
-	    curl_close($this->_obj_curl);
-	    return $return;
+		curl_setopt($this->_obj_curl, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($this->_obj_curl, CURLOPT_RETURNTRANSFER, 1);
+		$return = curl_exec($this->_obj_curl);
+		curl_close($this->_obj_curl);
+		return $return;
 	}
 	
 	private function _response($code)
@@ -69,8 +69,5 @@ class Prowl {
 		}
 	}
 }
-
-$prowl = new Prowl('294a0303cea3b5e9b13dd99bb080394e1c383c21');
-$prowl->post('badger','fish','tree');
 
 ?>
