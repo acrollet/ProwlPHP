@@ -2,64 +2,73 @@
 
 class Prowl
 {
-	private $_version = '0.2.2';
+	private $_version = '0.3';
 	private $_obj_curl = null;
-	private $_verified = false;
 	private $_return_code;
 	private $_remaining;
 	private $_resetdate;
+	
+	private $_use_proxy = false;
+	private $_proxy = null;
+	private $_proxy_userpwd = null;
 
 	private $_api_key = null;
-	private $_api_domain = 'https://prowl.weks.net/publicapi';
-	private $_url_verify = '/verify?apikey=%s';
-	private $_url_push = '/add';
+	private $_prov_key = null;
+	private $_api_domain = 'https://prowl.weks.net/publicapi/';
+	private $_url_verify = 'verify?apikey=%s&providerkey=%s';
+	private $_url_push = 'add';
 	
-	private $_params = array(		// Accessible params [key => maxsize]
-		'apikey' => 40,				// User API Key.
-		//'providerkey' => 40,		// Provider key.
-		'priority' => 2,			// Range from -2 to 2.
-		'application' => 254,		// Name of the app.
-		'event' => 1024,			// Name of the event.
-		'description' => 10000,		// Description of the event.
+	private $_params = array(			// Accessible params [key => maxsize]
+		'apikey' 		=> 		40,		// User API Key.
+		'providerkey' 	=>		40,		// Provider key.
+		'priority' 		=> 		2,		// Range from -2 to 2.
+		'application' 	=> 		254,	// Name of the app.
+		'event' 		=> 		1024,	// Name of the event.
+		'description' 	=> 		10000,	// Description of the event.
 	);
 	
-	public function __construct($apikey, $providerkey=null)
+	public function __construct($apikey=null, $verify=false, $provkey=null, $proxy=null, $userpwd=null)
 	{
+		if(isset($proxy))
+			$this->_setProxy($proxy, $userpwd);
+		
+		if(isset($apikey) && $verify)
+			$this->verify($apikey, $provkey);
+		
 		$this->_api_key = $apikey;
-		$return = $this->_execute(sprintf($this->_url_verify, $apikey));
-		
-		if($return===false)
-		{
-			$this->_error_code = 500;
-			return false;
-		}
-		
-		$this->_verified = $this->_response($return);
+	}
+	
+	public function verify($apikey, $provkey)
+	{
+		$return = $this->_execute(sprintf($this->_url_verify, $apikey, $provkey));		
+		return $this->_response($return);
 	}
 	
 	public function push($params, $is_post=false)
-	{
-		if(!$this->_verified)
-			return false;
-		
+	{	
 		if($is_post)
 			$post_params = '';
 			
 		$url = $is_post ? $this->_url_push : $this->_url_push . '?';
 		$params = func_get_args();
-		$params[0]['apikey'] = $this->_api_key;
-
+		
+		if(isset($this->_api_key) && !isset($params[0]['apikey']))
+			$params[0]['apikey'] = $this->_api_key;
+		
+		if(isset($this->_prov_key) && !isset($params[0]['providerkey']))
+			$params[0]['providerkey'] = $this->_prov_key;
+		
 		foreach($params[0] as $k => $v)
 		{
-			$v = str_replace("\\n","\n",$v);	// Fixes line break issue! Thank you Fr3d!
+			$v = str_replace("\\n","\n",$v);	// Fixes line break issue! Cheers Fr3d!
 			if(!isset($this->_params[$k]))
 			{
-				$this->_error_code = 400;
+				$this->_return_code = 400;
 				return false;
 			}
 			if(strlen($v) > $this->_params[$k])
 			{
-				$this->_error_code = 10001;
+				$this->_return_code = 10001;
 				return false;
 			}
 			
@@ -76,15 +85,9 @@ class Prowl
 		
 		$return = $this->_execute($url, $is_post ? true : false, $params);
 		
-		if($return===false)
-		{
-			$this->_error_code=500;
-			return false;
-		}
-		
 		return $this->_response($return);	
 	}
-	
+		
 	public function getError()
 	{
 		switch($this->_return_code)
@@ -102,7 +105,7 @@ class Prowl
 	
 	public function getRemaining()
 	{
-		if(!$this->_verified)
+		if(!isset($this->_remaining))
 			return false;
 		
 		return $this->_remaining;
@@ -110,7 +113,7 @@ class Prowl
 	
 	public function getResetDate()
 	{
-		if(!$this->_verified)
+		if(!isset($this->_resetdate))
 			return false;
 			
 		return $this->_resetdate;
@@ -131,6 +134,13 @@ class Prowl
 			curl_setopt($this->_obj_curl, CURLOPT_POSTFIELDS, $params);
 		}
 		
+		if($this->_use_proxy)
+		{
+			curl_setopt($this->_obj_curl, CURLOPT_HTTPPROXYTUNNEL, 1);
+			curl_setopt($this->_obj_curl, CURLOPT_PROXY, $this->_proxy);
+			curl_setopt($this->_obj_curl, CURLOPT_PROXYUSERPWD, $this->_proxy_userpwd); 
+		}
+		
 		$return = curl_exec($this->_obj_curl);
 		curl_close($this->_obj_curl);
 		return $return;
@@ -138,6 +148,12 @@ class Prowl
 	
 	private function _response($return)
 	{
+		if($return===false)
+		{
+			$this->_return_code = 500;
+			return false;
+		}
+		
 		$response = new SimpleXMLElement($return);
 		
 		if(isset($response->success))
@@ -158,6 +174,16 @@ class Prowl
 		}
 		
 		unset($response);
+	}
+	
+	private function _setProxy($proxy, $userpwd=null)
+	{
+		if(strlen($proxy) > 0)
+		{
+			$this->_use_proxy = true;
+			$this->_proxy = $proxy;
+			$this->_proxy_userpwd = $userpwd;
+		}
 	}
 }
 

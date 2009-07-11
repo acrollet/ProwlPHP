@@ -10,6 +10,13 @@ I'd love to hear your ideas, suggestions and even your uses for ProwlPHP. Just d
 ------
 Release Notes
 ------
+
+0.3
+* HTTP proxy support added.
+* Keys no longer verified be default at construction and as such saves API requests.
+* Provider keys now supported.
+* Error codes were not being saved correctly. Bug fixed.
+* API Key verification can now be called manually using 'verify' function.
  
 0.2.2
 
@@ -27,6 +34,4 @@ Release Notes
 Planned
 ------
 
-* Verify no longer required to use push function. 
-* Provider keys
-* HTTP Proxy support
+* Optimize the code as much as possible! 
