@@ -2,7 +2,7 @@
 
 class Prowl
 {
-	private $_version = '0.2.1';
+	private $_version = '0.2.2';
 	private $_obj_curl = null;
 	private $_verified = false;
 	private $_return_code;
@@ -51,6 +51,7 @@ class Prowl
 
 		foreach($params[0] as $k => $v)
 		{
+			$v = str_replace("\\n","\n",$v);	// Fixes line break issue! Thank you Fr3d!
 			if(!isset($this->_params[$k]))
 			{
 				$this->_error_code = 400;
