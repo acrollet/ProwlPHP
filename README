@@ -27,5 +27,6 @@ Release Notes
 Planned
 ------
 
+* Verify no longer required to use push function. 
 * Provider keys
 * HTTP Proxy support
