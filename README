@@ -1,0 +1,31 @@
+ProwlPHP
+
+Current Version: 0.2.2
+Written by Fenric (sandbox@fenric.co.uk), 9 July 2009
+ 
+Hello there! This is a PHP class for Prowls iPhone notificaton service with API key authentication. More information on Prowl can be found at  http://prowl.weks.net/. For more information on the class and the Prowl API take a look at the Wiki page (http://wiki.github.com/Fenric/ProwlPHP).
+
+I'd love to hear your ideas, suggestions and even your uses for ProwlPHP. Just drop me (Fenric) a message in the CocoaForge forums (http://forums.cocoaforge.com/memberlist.php?mode=viewprofile&u=41743) or right here on Github! Please post any issues you find on the issues section of GitHub (http://github.com/Fenric/ProwlPHP/issues).
+ 
+------
+Release Notes
+------
+ 
+0.2.2
+
+* Line breaks were not being honoured when ProwlPHP class was using with CLI. Commit fixed this issue. Thank you Fr3d for resolving this issue.
+
+0.2.1
+
+* Addition of getRemaining function. Retrieve how many requests your IP has left.
+* Addition of getResetdate function. Retrieve reset date of remaining push requests. UNIX timestamp format.
+* Error code and messages added for when IP exceeds API limit.
+* Fixed push functions ability to request API using POST method.
+* Prep for provider keys, need to find out what they do first though!
+
+------
+Planned
+------
+
+* Provider keys
+* HTTP Proxy support
