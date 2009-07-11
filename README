@@ -1,6 +1,6 @@
 ProwlPHP
 
-Current Version: 0.2.2
+Current Version: 0.3
 Written by Fenric (sandbox@fenric.co.uk), 9 July 2009
  
 Hello there! This is a PHP class for Prowls iPhone notificaton service with API key authentication. More information on Prowl can be found at  http://prowl.weks.net/. For more information on the class and the Prowl API take a look at the Wiki page (http://wiki.github.com/Fenric/ProwlPHP).
