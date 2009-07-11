@@ -2,10 +2,12 @@
 
 class Prowl
 {
-	private $_version = '0.2';
+	private $_version = '0.2.1';
 	private $_obj_curl = null;
 	private $_verified = false;
-	private $_error_code = null;
+	private $_return_code;
+	private $_remaining;
+	private $_resetdate;
 
 	private $_api_key = null;
 	private $_api_domain = 'https://prowl.weks.net/publicapi';
@@ -13,41 +15,37 @@ class Prowl
 	private $_url_push = '/add';
 	
 	private $_params = array(		// Accessible params [key => maxsize]
-		'apikey' => 40,			// User API Key.
-		'priority' => 2,		// Range from -2 to 2.
+		'apikey' => 40,				// User API Key.
+		//'providerkey' => 40,		// Provider key.
+		'priority' => 2,			// Range from -2 to 2.
 		'application' => 254,		// Name of the app.
-		'event' => 1024,		// Name of the event.
+		'event' => 1024,			// Name of the event.
 		'description' => 10000,		// Description of the event.
 	);
 	
-	public function __construct($apikey)
+	public function __construct($apikey, $providerkey=null)
 	{
 		$this->_api_key = $apikey;
-		
-		$url = sprintf($this->_url_verify, $apikey);
-		$return = $this->_execute($url);
+		$return = $this->_execute(sprintf($this->_url_verify, $apikey));
 		
 		if($return===false)
 		{
-			$this->_error_code=500;
+			$this->_error_code = 500;
 			return false;
 		}
 		
-		$resp = new SimpleXMLElement($return);
-		$this->_verified = $this->_response($resp);
+		$this->_verified = $this->_response($return);
 	}
 	
 	public function push($params, $is_post=false)
 	{
 		if(!$this->_verified)
-			return 'Auth Failed';
+			return false;
 		
-		if(!$is_post)
-		{
-			$url = $is_post ? $this->_url_push : $this->_url_push . '?';
+		if($is_post)
 			$post_params = '';
-		}
-		
+			
+		$url = $is_post ? $this->_url_push : $this->_url_push . '?';
 		$params = func_get_args();
 		$params[0]['apikey'] = $this->_api_key;
 
@@ -63,42 +61,58 @@ class Prowl
 				$this->_error_code = 10001;
 				return false;
 			}
-			if(!$is_post)
-			{
-				$url .= $k . '=' . urlencode($v) . '&';
-			}
-				else
-			{
+			
+			if($is_post)
 				$post_params .= $k . '=' . urlencode($v) . '&';
-			}
-		}
-		
-		if(!$is_post)
-		{
-			$url = substr($url, 0, strlen($url)-1);
-		}
 			else
-		{
-			$params = substr($post_params, 0, strlen($post_params)-1);
+				$url .= $k . '=' . urlencode($v) . '&';
 		}
 		
-		$return = $this->_execute($url, $is_post ? true : false, $params);	
-		$resp = new SimpleXMLElement($return);
-		return $this->_response($resp);	
+		if($is_post)
+			$params = substr($post_params, 0, strlen($post_params)-1);
+		else
+			$url = substr($url, 0, strlen($url)-1);
+		
+		$return = $this->_execute($url, $is_post ? true : false, $params);
+		
+		if($return===false)
+		{
+			$this->_error_code=500;
+			return false;
+		}
+		
+		return $this->_response($return);	
 	}
 	
 	public function getError()
 	{
-		switch($this->_error_code)
+		switch($this->_return_code)
 		{
-			case 200: 	return 'Pushed Successfully';	break;
+			case 200: 	return 'Request Successfull.';	break;
 			case 400:	return 'Bad request, the parameters you provided did not validate.';	break;
 			case 401: 	return 'The API key given is not valid, and does not correspond to a user.';	break;
 			case 405:	return 'Method not allowed, you attempted to use a non-SSL connection to Prowl.';	break;
+			case 406:	return 'Your IP address has exceeded the API limit.';	break;
 			case 500:	return 'Internal server error, something failed to execute properly on the Prowl side.';	break;
 			case 10001:	return 'Parameter value exceeds the maximum byte size.';	break;
 			default:	return false;	break;
 		}
+	}
+	
+	public function getRemaining()
+	{
+		if(!$this->_verified)
+			return false;
+		
+		return $this->_remaining;
+	}
+	
+	public function getResetDate()
+	{
+		if(!$this->_verified)
+			return false;
+			
+		return $this->_resetdate;
 	}
 	
 	private function _execute($url, $is_post=false, $params=null)
@@ -121,23 +135,28 @@ class Prowl
 		return $return;
 	}
 	
-	private function _response($response)
+	private function _response($return)
 	{
+		$response = new SimpleXMLElement($return);
+		
 		if(isset($response->success))
 		{
-			$code = $response->success['code'];
+			$this->_return_code = (int)$response->success['code'];
+			$this->_remaining = (int)$response->success['remaining'];
+			$this->_resetdate = (int)$response->success['resetdate'];
 		}
 			else
 		{
-			$code = $response->error['code'];
+			$this->_return_code = $response->error['code'];
 		}
-		$this->_error_code = $code;
 		
-		switch($code)
+		switch($this->_return_code)
 		{
 			case 200: 	return true;	break;
 			default:	return false;	break;
 		}
+		
+		unset($response);
 	}
 }
 
