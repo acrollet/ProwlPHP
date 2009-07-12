@@ -90,9 +90,13 @@ class Prowl
 		
 	public function getError()
 	{
+    $curl_version = (curl_version());
+    if ($curl_version['ssl_version'] == '') {
+      return 'Your curl library does not support SSL connections'; break;
+    }
 		switch($this->_return_code)
 		{
-			case 200: 	return 'Request Successfull.';	break;
+			case 200: 	return 'Request Successful.';	break;
 			case 400:	return 'Bad request, the parameters you provided did not validate.';	break;
 			case 401: 	return 'The API key given is not valid, and does not correspond to a user.';	break;
 			case 405:	return 'Method not allowed, you attempted to use a non-SSL connection to Prowl.';	break;
